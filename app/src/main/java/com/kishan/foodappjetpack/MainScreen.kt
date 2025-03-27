@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
@@ -44,6 +45,7 @@ val whatsOnYourMindCategories = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: DishViewModel = viewModel()) {
+    var isVegetarian = true
     val uiState by viewModel.uiState
     var selectedDish by remember { mutableStateOf<Dish?>(null) }
     var sheetState = rememberModalBottomSheetState()
@@ -385,55 +387,82 @@ fun DishList(dishes: List<Dish>, onDishClick: (Dish) -> Unit) {
     }
 }
 
+
 @Composable
 fun DishItem(dish: Dish, onClick: () -> Unit) {
+    val isVegetarian: Boolean = true
     Card(
         modifier = Modifier
             .width(150.dp)
-            .padding(horizontal = 8.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Image(
-                painter = rememberAsyncImagePainter(dish.imageUrl),
-                contentDescription = dish.dishName,
+        Box {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp),
-                contentScale = ContentScale.Crop
-            )
-            Text(
-                text = dish.dishName,
-                modifier = Modifier.padding(top = 8.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center
-            )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.Center
+                    .padding(bottom = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Circular Image
+                Image(
+                    painter = rememberAsyncImagePainter(dish.imageUrl),
+                    contentDescription = dish.dishName,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+                // Rating
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "4.2 ★",
+                        color = Color(0xFFFFA500), // Orange color for rating
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                // Dish Name
                 Text(
-                    text = "★ 4.2",
-                    color = Color(0xFFFFA500),
-                    style = MaterialTheme.typography.bodySmall
+                    text = dish.dishName,
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .fillMaxWidth(),
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color(0xFF1E88E5) // Blue color to match the image
+                    ),
+                    textAlign = TextAlign.Center
+                )
+                // Prep Time and Difficulty
+                Text(
+                    text = "$30 min • Medium prep.",
+                    modifier = Modifier.padding(top = 2.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center
                 )
             }
-            Text(
-                text = "30 min • Medium prep.",
-                modifier = Modifier.padding(bottom = 8.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center
+            // Vegetarian/Non-Vegetarian Indicator (Red Dot)
+            Icon(
+                imageVector = Icons.Default.Circle,
+                contentDescription = "Vegetarian Indicator",
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(12.dp),
+                tint = if (isVegetarian) Color.Green else Color.Red
             )
         }
     }
 }
+
 
 @OptIn(ExperimentalSnapperApi::class)
 @Composable

@@ -3,12 +3,11 @@ package com.kishan.foodappjetpack.viewmodel
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.kishan.foodappjetpack.api.DishRepository
 import com.kishan.foodappjetpack.data.Dish
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.resetMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -17,6 +16,7 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
+import kotlinx.coroutines.Dispatchers
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DishViewModelTest {
@@ -35,11 +35,7 @@ class DishViewModelTest {
     fun setUp() {
         MockitoAnnotations.openMocks(this)
         Dispatchers.setMain(testDispatcher)
-        dishViewModel = DishViewModel()
-        // Inject the mocked repository into the ViewModel
-        val repositoryField = DishViewModel::class.java.getDeclaredField("repository")
-        repositoryField.isAccessible = true
-        repositoryField.set(dishViewModel, dishRepository)
+        dishViewModel = DishViewModel(dishRepository)
     }
 
     @After
@@ -49,18 +45,13 @@ class DishViewModelTest {
 
     @Test
     fun `loadDishes updates uiState with dishes on success`() = runTest {
-        // Arrange
         val expectedDishes = listOf(
-            Dish(dishName = "Paneer Tikka", imageUrl = "https://example.com/paneer-tikka.jpg"),
-            Dish(dishName = "Jeera Rice", imageUrl = "https://example.com/jeera-rice.jpg")
+            Dish("Paneer Tikka", "https://example.com/paneer-tikka.jpg"),
+            Dish("Jeera Rice", "https://example.com/jeera-rice.jpg")
         )
         `when`(dishRepository.getDishes()).thenReturn(expectedDishes)
-
-        // Act
         dishViewModel.loadDishes()
-        testDispatcher.scheduler.advanceUntilIdle() // Ensure coroutines complete
-
-        // Assert
+        testDispatcher.scheduler.advanceUntilIdle()
         val uiState = dishViewModel.uiState.value
         assertEquals(false, uiState.isLoading)
         assertEquals(expectedDishes, uiState.dishes)
@@ -69,18 +60,13 @@ class DishViewModelTest {
 
     @Test
     fun `loadDishes updates uiState with error on failure`() = runTest {
-        // Arrange
         val exception = RuntimeException("Network error")
         `when`(dishRepository.getDishes()).thenThrow(exception)
-
-        // Act
         dishViewModel.loadDishes()
-        testDispatcher.scheduler.advanceUntilIdle() // Ensure coroutines complete
-
-        // Assert
+        testDispatcher.scheduler.advanceUntilIdle()
         val uiState = dishViewModel.uiState.value
         assertEquals(false, uiState.isLoading)
-        assertEquals(emptyList<Dish>(), uiState.dishes)
+        assertEquals(emptyList<Dish>(), uiState.dishes) // Expect empty list, not null
         assertEquals(exception.message, uiState.error)
     }
 }
